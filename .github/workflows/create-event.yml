@@ -19,20 +19,12 @@ on:
         description: 'Event description'
         required: true
         type: string
-      event_date:
-        description: 'Event date (YYYY-MM-DD)'
+      event_datetime:
+        description: 'Event date and time (YYYY-MM-DD HH:MM format)'
         required: true
         type: string
-      event_time:
-        description: 'Event time (HH:MM in 24h format)'
-        required: true
-        type: string
-      venue:
-        description: 'Venue name'
-        required: true
-        type: string
-      venue_address:
-        description: 'Venue address'
+      venue_info:
+        description: 'Venue name and address (separate with | e.g. "Tech Hub|123 Main St")'
         required: true
         type: string
       num_speakers:
@@ -94,10 +86,8 @@ jobs:
         EVENT_TYPE: ${{ github.event.inputs.event_type }}
         EVENT_TITLE: ${{ github.event.inputs.event_title }}
         EVENT_DESCRIPTION: ${{ github.event.inputs.event_description }}
-        EVENT_DATE: ${{ github.event.inputs.event_date }}
-        EVENT_TIME: ${{ github.event.inputs.event_time }}
-        VENUE: ${{ github.event.inputs.venue }}
-        VENUE_ADDRESS: ${{ github.event.inputs.venue_address }}
+        EVENT_DATETIME: ${{ github.event.inputs.event_datetime }}
+        VENUE_INFO: ${{ github.event.inputs.venue_info }}
         NUM_SPEAKERS: ${{ github.event.inputs.num_speakers }}
         SPONSOR: ${{ github.event.inputs.sponsor }}
         SPONSOR_URL: ${{ github.event.inputs.sponsor_url }}
