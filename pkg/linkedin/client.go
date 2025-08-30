@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/m0ab/meetop/pkg/config"
 )
 
 type Client struct {
@@ -16,9 +18,9 @@ type Client struct {
 }
 
 type ShareRequest struct {
-	Author      string      `json:"author"`
-	Commentary  string      `json:"commentary"`
-	Visibility  Visibility  `json:"visibility"`
+	Author       string       `json:"author"`
+	Commentary   string       `json:"commentary"`
+	Visibility   Visibility   `json:"visibility"`
 	Distribution Distribution `json:"distribution"`
 }
 
@@ -43,8 +45,8 @@ func NewClient(accessToken, personURN string) *Client {
 	}
 }
 
-func (c *Client) ShareEvent(eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) error {
-	commentary := c.buildEventPost(eventTitle, eventURL, venue, eventDate, eventTime, numSpeakers, sponsor, sponsorURL)
+func (c *Client) ShareEvent(eventType config.EventType, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) error {
+	commentary := c.buildEventPost(eventType, eventTitle, eventURL, venue, eventDate, eventTime, numSpeakers, sponsor, sponsorURL)
 
 	shareReq := ShareRequest{
 		Author:     c.personURN,
@@ -94,7 +96,7 @@ func (c *Client) ShareEvent(eventTitle, eventURL, venue, eventDate, eventTime st
 	return nil
 }
 
-func (c *Client) buildEventPost(eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) string {
+func (c *Client) buildEventPost(eventType config.EventType, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) string {
 	dateTime, _ := time.Parse("2006-01-02 15:04", eventDate+" "+eventTime)
 	formattedDate := dateTime.Format("Monday, January 2, 2006 at 3:04 PM")
 
@@ -103,12 +105,21 @@ func (c *Client) buildEventPost(eventTitle, eventURL, venue, eventDate, eventTim
 		speakerText = "speakers"
 	}
 
-	post := fmt.Sprintf("🎉 Excited to announce our upcoming meetup: %s\n\n", eventTitle)
-	post += fmt.Sprintf("📅 Date & Time: %s\n", formattedDate)
-	post += fmt.Sprintf("📍 Location: %s\n", venue)
-	post += fmt.Sprintf("🎤 Featuring %d amazing %s\n\n", numSpeakers, speakerText)
+	var post string
+	if eventType == config.EventTypeSocial {
+		post = fmt.Sprintf("🍻 Excited to announce our upcoming social meetup: %s\n\n", eventTitle)
+		post += fmt.Sprintf("📅 Date & Time: %s\n", formattedDate)
+		post += fmt.Sprintf("📍 Location: %s\n", venue)
+		post += "\n🤝 Join us for networking, great conversations, and community building!\n\n"
+	} else {
+		post = fmt.Sprintf("🎉 Excited to announce our upcoming meetup: %s\n\n", eventTitle)
+		post += fmt.Sprintf("📅 Date & Time: %s\n", formattedDate)
+		post += fmt.Sprintf("📍 Location: %s\n", venue)
+		post += fmt.Sprintf("🎤 Featuring %d amazing %s\n\n", numSpeakers, speakerText)
+	}
 
-	if sponsor != "" {
+	// Only show sponsor info for speaker events
+	if eventType == config.EventTypeSpeaker && sponsor != "" {
 		if sponsorURL != "" {
 			post += fmt.Sprintf("Special thanks to our sponsor: %s (%s)\n\n", sponsor, sponsorURL)
 		} else {
@@ -117,7 +128,12 @@ func (c *Client) buildEventPost(eventTitle, eventURL, venue, eventDate, eventTim
 	}
 
 	post += fmt.Sprintf("Don't miss out! Register now: %s\n\n", eventURL)
-	post += "#meetup #tech #community #networking"
+
+	if eventType == config.EventTypeSocial {
+		post += "#meetup #social #community #networking #socializing"
+	} else {
+		post += "#meetup #tech #community #networking #speakers"
+	}
 
 	return post
 }

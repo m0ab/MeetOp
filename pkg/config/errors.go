@@ -13,4 +13,5 @@ var (
 	ErrMissingVenueAddress       = errors.New("VENUE_ADDRESS is required")
 	ErrInvalidDateFormat         = errors.New("EVENT_DATE must be in YYYY-MM-DD format")
 	ErrInvalidTimeFormat         = errors.New("EVENT_TIME must be in HH:MM format")
+	ErrInvalidSpeakerCount       = errors.New("NUM_SPEAKERS must be greater than 0 for speaker events")
 )

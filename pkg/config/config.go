@@ -3,14 +3,22 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
+type EventType string
+
+const (
+	EventTypeSocial  EventType = "social"
+	EventTypeSpeaker EventType = "speaker"
+)
+
 type Config struct {
 	// Meetup API
-	MeetupAPIKey      string
+	MeetupAPIKey       string
 	MeetupGroupURLName string
 
 	// Slack API
@@ -23,6 +31,7 @@ type Config struct {
 	LinkedInPersonURN   string
 
 	// Event details
+	EventType        EventType
 	EventTitle       string
 	EventDescription string
 	EventDate        string
@@ -42,9 +51,29 @@ func Load() (*Config, error) {
 	// Load .env file if it exists (for local development)
 	_ = godotenv.Load()
 
-	numSpeakers, err := strconv.Atoi(getEnv("NUM_SPEAKERS", "1"))
+	// Parse event type
+	eventTypeStr := strings.ToLower(getEnv("EVENT_TYPE", "speaker"))
+	var eventType EventType
+	switch eventTypeStr {
+	case "social":
+		eventType = EventTypeSocial
+	case "speaker":
+		eventType = EventTypeSpeaker
+	default:
+		eventType = EventTypeSpeaker // default to speaker events
+	}
+
+	// For social events, default speakers to 0, for speaker events default to 1
+	defaultSpeakers := "1"
+	if eventType == EventTypeSocial {
+		defaultSpeakers = "0"
+	}
+	numSpeakers, err := strconv.Atoi(getEnv("NUM_SPEAKERS", defaultSpeakers))
 	if err != nil {
 		numSpeakers = 1
+		if eventType == EventTypeSocial {
+			numSpeakers = 0
+		}
 	}
 
 	shareSlack, _ := strconv.ParseBool(getEnv("SHARE_SLACK", "true"))
@@ -58,6 +87,7 @@ func Load() (*Config, error) {
 		SlackWebhookURL:     os.Getenv("SLACK_WEBHOOK_URL"),
 		LinkedInAccessToken: os.Getenv("LINKEDIN_ACCESS_TOKEN"),
 		LinkedInPersonURN:   os.Getenv("LINKEDIN_PERSON_URN"),
+		EventType:           eventType,
 		EventTitle:          os.Getenv("EVENT_TITLE"),
 		EventDescription:    os.Getenv("EVENT_DESCRIPTION"),
 		EventDate:           os.Getenv("EVENT_DATE"),
@@ -108,7 +138,27 @@ func (c *Config) Validate() error {
 		return ErrInvalidTimeFormat
 	}
 
+	// Validate event type specific requirements
+	if c.EventType == EventTypeSpeaker {
+		if c.NumSpeakers <= 0 {
+			return ErrInvalidSpeakerCount
+		}
+	} else if c.EventType == EventTypeSocial {
+		// For social events, speakers and sponsors are optional
+		// No additional validation needed
+	}
+
 	return nil
+}
+
+// IsSocialEvent returns true if this is a social event
+func (c *Config) IsSocialEvent() bool {
+	return c.EventType == EventTypeSocial
+}
+
+// IsSpeakerEvent returns true if this is a speaker event
+func (c *Config) IsSpeakerEvent() bool {
+	return c.EventType == EventTypeSpeaker
 }
 
 func getEnv(key, defaultValue string) string {

@@ -43,7 +43,7 @@ func main() {
 	// Create Meetup event
 	logger.Println("Creating Meetup event...")
 	meetupClient := meetup.NewClient(cfg.MeetupAPIKey, cfg.MeetupGroupURLName)
-	
+
 	event, err := meetupClient.CreateEvent(
 		cfg.EventTitle,
 		cfg.EventDescription,
@@ -67,14 +67,15 @@ func main() {
 	if cfg.ShareSlack {
 		logger.Println("Sharing event to Slack...")
 		slackClient := slack.NewClient(cfg.SlackBotToken)
-		
+
 		var err error
-		
+
 		// Use webhook if configured, otherwise use bot token
 		if cfg.SlackWebhookURL != "" {
 			logger.Println("Using Slack webhook for message posting")
 			err = slackClient.PostWebhookMessage(
 				cfg.SlackWebhookURL,
+				cfg.EventType,
 				cfg.EventTitle,
 				event.EventURL,
 				cfg.Venue,
@@ -88,6 +89,7 @@ func main() {
 			logger.Println("Using Slack bot token for message posting")
 			err = slackClient.PostMessage(
 				cfg.SlackChannel,
+				cfg.EventType,
 				cfg.EventTitle,
 				event.EventURL,
 				cfg.Venue,
@@ -101,7 +103,7 @@ func main() {
 			logger.Println("Skipping Slack sharing (missing webhook URL or bot token/channel)")
 			fmt.Printf("⏭️  Slack sharing skipped (missing configuration)\n")
 		}
-		
+
 		if err != nil {
 			logger.Printf("Failed to share to Slack: %v", err)
 			fmt.Printf("❌ Failed to share to Slack: %v\n", err)
@@ -118,8 +120,9 @@ func main() {
 	if cfg.ShareLinkedIn && cfg.LinkedInAccessToken != "" && cfg.LinkedInPersonURN != "" {
 		logger.Println("Sharing event to LinkedIn...")
 		linkedinClient := linkedin.NewClient(cfg.LinkedInAccessToken, cfg.LinkedInPersonURN)
-		
+
 		err := linkedinClient.ShareEvent(
+			cfg.EventType,
 			cfg.EventTitle,
 			event.EventURL,
 			cfg.Venue,
