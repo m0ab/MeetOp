@@ -79,6 +79,10 @@ func Load() (*Config, error) {
 	shareSlack, _ := strconv.ParseBool(getEnv("SHARE_SLACK", "true"))
 	shareLinkedIn, _ := strconv.ParseBool(getEnv("SHARE_LINKEDIN", "true"))
 
+	// Parse combined datetime and venue info
+	eventDate, eventTime := parseEventDateTime()
+	venue, venueAddress := parseVenueInfo()
+
 	return &Config{
 		MeetupAPIKey:        os.Getenv("MEETUP_API_KEY"),
 		MeetupGroupURLName:  os.Getenv("MEETUP_GROUP_URLNAME"),
@@ -90,10 +94,10 @@ func Load() (*Config, error) {
 		EventType:           eventType,
 		EventTitle:          os.Getenv("EVENT_TITLE"),
 		EventDescription:    os.Getenv("EVENT_DESCRIPTION"),
-		EventDate:           os.Getenv("EVENT_DATE"),
-		EventTime:           os.Getenv("EVENT_TIME"),
-		Venue:               os.Getenv("VENUE"),
-		VenueAddress:        os.Getenv("VENUE_ADDRESS"),
+		EventDate:           eventDate,
+		EventTime:           eventTime,
+		Venue:               venue,
+		VenueAddress:        venueAddress,
 		NumSpeakers:         numSpeakers,
 		Sponsor:             os.Getenv("SPONSOR"),
 		SponsorURL:          os.Getenv("SPONSOR_URL"),
@@ -166,4 +170,34 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// parseEventDateTime parses EVENT_DATETIME or falls back to EVENT_DATE and EVENT_TIME
+func parseEventDateTime() (date, time string) {
+	// Try combined datetime first
+	if eventDateTime := os.Getenv("EVENT_DATETIME"); eventDateTime != "" {
+		parts := strings.Split(eventDateTime, " ")
+		if len(parts) == 2 {
+			return parts[0], parts[1]
+		}
+	}
+	
+	// Fallback to separate date and time
+	return os.Getenv("EVENT_DATE"), os.Getenv("EVENT_TIME")
+}
+
+// parseVenueInfo parses VENUE_INFO or falls back to VENUE and VENUE_ADDRESS
+func parseVenueInfo() (venue, address string) {
+	// Try combined venue info first
+	if venueInfo := os.Getenv("VENUE_INFO"); venueInfo != "" {
+		parts := strings.Split(venueInfo, "|")
+		if len(parts) == 2 {
+			return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+		}
+		// If no separator, treat entire string as venue
+		return strings.TrimSpace(venueInfo), ""
+	}
+	
+	// Fallback to separate venue and address
+	return os.Getenv("VENUE"), os.Getenv("VENUE_ADDRESS")
 }
