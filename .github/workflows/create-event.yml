@@ -1,0 +1,104 @@
+name: Create Meetup Event and Share
+
+on:
+  workflow_dispatch:
+    inputs:
+      event_title:
+        description: 'Event title'
+        required: true
+        type: string
+      event_description:
+        description: 'Event description'
+        required: true
+        type: string
+      event_date:
+        description: 'Event date (YYYY-MM-DD)'
+        required: true
+        type: string
+      event_time:
+        description: 'Event time (HH:MM in 24h format)'
+        required: true
+        type: string
+      venue:
+        description: 'Venue name'
+        required: true
+        type: string
+      venue_address:
+        description: 'Venue address'
+        required: true
+        type: string
+      num_speakers:
+        description: 'Number of speakers'
+        required: true
+        type: string
+        default: '1'
+      sponsor:
+        description: 'Sponsor name (optional)'
+        required: false
+        type: string
+      sponsor_url:
+        description: 'Sponsor URL (optional)'
+        required: false
+        type: string
+      share_slack:
+        description: 'Share to Slack'
+        required: true
+        type: boolean
+        default: true
+      share_linkedin:
+        description: 'Share to LinkedIn'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  create-and-share-event:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Build application
+      run: go build -o meetop ./cmd/meetop
+
+    - name: Create event and share
+      env:
+        # Meetup API credentials
+        MEETUP_API_KEY: ${{ secrets.MEETUP_API_KEY }}
+        MEETUP_GROUP_URLNAME: ${{ secrets.MEETUP_GROUP_URLNAME }}
+        
+        # Slack API credentials
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+        # LinkedIn API credentials
+        LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+        LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+        
+        # Event inputs
+        EVENT_TITLE: ${{ github.event.inputs.event_title }}
+        EVENT_DESCRIPTION: ${{ github.event.inputs.event_description }}
+        EVENT_DATE: ${{ github.event.inputs.event_date }}
+        EVENT_TIME: ${{ github.event.inputs.event_time }}
+        VENUE: ${{ github.event.inputs.venue }}
+        VENUE_ADDRESS: ${{ github.event.inputs.venue_address }}
+        NUM_SPEAKERS: ${{ github.event.inputs.num_speakers }}
+        SPONSOR: ${{ github.event.inputs.sponsor }}
+        SPONSOR_URL: ${{ github.event.inputs.sponsor_url }}
+        SHARE_SLACK: ${{ github.event.inputs.share_slack }}
+        SHARE_LINKEDIN: ${{ github.event.inputs.share_linkedin }}
+      run: ./meetop
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: meetop-logs
+        path: meetop.log
