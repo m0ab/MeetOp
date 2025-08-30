@@ -56,24 +56,41 @@ go run -race ./cmd/meetop
 
 ### API Integration Details
 - **Meetup.com**: Uses OAuth2 Bearer token authentication, creates events with venue details
-- **Slack**: Supports both webhooks (preferred) and bot tokens, sends structured block messages with hyperlinked sponsors
-- **LinkedIn**: Uses personal access token, posts to user's feed with UGC API, includes full sponsor URLs for proper attribution
+- **Slack**: Supports both webhooks (preferred) and bot tokens, sends structured block messages with customized content based on event type
+- **LinkedIn**: Uses personal access token, posts to user's feed with UGC API, includes customized messaging and hashtags based on event type
+
+### Event Types
+The application supports two types of meetup events:
+
+- **Speaker Events** (`EVENT_TYPE=speaker`): Traditional meetups with speakers and presentations
+  - Requires speaker count (`NUM_SPEAKERS` > 0)
+  - Supports sponsor information (`SPONSOR` and `SPONSOR_URL`)
+  - Messages emphasize speakers and technical content
+  - Uses hashtags: #meetup #tech #community #networking #speakers
+
+- **Social Events** (`EVENT_TYPE=social`): Networking-focused meetups without formal presentations
+  - Speaker count defaults to 0 and is ignored
+  - Sponsor information is not displayed (social events are sponsor-free)
+  - Messages emphasize networking and community building
+  - Uses hashtags: #meetup #social #community #networking #socializing
 
 ## Environment Variables
 
 All configuration is handled through environment variables. See `.env.example` for the complete list. Critical variables include:
+- `EVENT_TYPE` for event type (`speaker` or `social`, defaults to `speaker`)
 - `MEETUP_API_KEY` and `MEETUP_GROUP_URLNAME` for event creation
 - Slack integration (choose one):
   - `SLACK_WEBHOOK_URL` for webhook posting (preferred)
   - `SLACK_BOT_TOKEN` and `SLACK_CHANNEL` for bot token posting
 - `LINKEDIN_ACCESS_TOKEN` and `LINKEDIN_PERSON_URN` for LinkedIn sharing
-- `SPONSOR` and `SPONSOR_URL` for sponsor attribution (both optional)
+- `SPONSOR` and `SPONSOR_URL` for sponsor attribution (speaker events only)
 
 ## GitHub Actions Workflow
 
 The main workflow (`.github/workflows/create-event.yml`) accepts these inputs:
+- `event_type`: Choice between `speaker` and `social` event types
 - Event details: title, description, date, time, venue, address
-- Speaker count and sponsor information (name and URL, both optional)
+- Speaker count (ignored for social events) and sponsor information (speaker events only)
 - Boolean toggles for Slack and LinkedIn sharing
 
 ## Error Handling
@@ -85,7 +102,8 @@ The main workflow (`.github/workflows/create-event.yml`) accepts these inputs:
 
 ## Development Notes
 
-- Uses Go modules for dependency management
+- Uses Go modules for dependency management (`go mod tidy` handles dependencies correctly)
 - Follows standard Go project layout conventions
 - All secrets must be stored as GitHub repository secrets
 - Local development requires `.env` file (copy from `.env.example`)
+- Build system properly configured with correct module dependencies

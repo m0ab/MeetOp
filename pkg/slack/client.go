@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/m0ab/meetop/pkg/config"
 )
 
 type Client struct {
@@ -49,8 +51,8 @@ func NewClient(token string) *Client {
 	}
 }
 
-func (c *Client) PostMessage(channel, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) error {
-	message := c.buildEventMessage(channel, eventTitle, eventURL, venue, eventDate, eventTime, numSpeakers, sponsor, sponsorURL)
+func (c *Client) PostMessage(channel string, eventType config.EventType, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) error {
+	message := c.buildEventMessage(channel, eventType, eventTitle, eventURL, venue, eventDate, eventTime, numSpeakers, sponsor, sponsorURL)
 
 	reqBody, err := json.Marshal(message)
 	if err != nil {
@@ -88,9 +90,9 @@ func (c *Client) PostMessage(channel, eventTitle, eventURL, venue, eventDate, ev
 	return nil
 }
 
-func (c *Client) PostWebhookMessage(webhookURL, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) error {
-	message := c.buildEventMessage("", eventTitle, eventURL, venue, eventDate, eventTime, numSpeakers, sponsor, sponsorURL)
-	
+func (c *Client) PostWebhookMessage(webhookURL string, eventType config.EventType, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) error {
+	message := c.buildEventMessage("", eventType, eventTitle, eventURL, venue, eventDate, eventTime, numSpeakers, sponsor, sponsorURL)
+
 	// Remove channel from message for webhook (webhooks don't use channel in payload)
 	message.Channel = ""
 
@@ -120,17 +122,27 @@ func (c *Client) PostWebhookMessage(webhookURL, eventTitle, eventURL, venue, eve
 	return nil
 }
 
-func (c *Client) buildEventMessage(channel, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) Message {
+func (c *Client) buildEventMessage(channel string, eventType config.EventType, eventTitle, eventURL, venue, eventDate, eventTime string, numSpeakers int, sponsor, sponsorURL string) Message {
 	dateTime, _ := time.Parse("2006-01-02 15:04", eventDate+" "+eventTime)
 	formattedDate := dateTime.Format("Monday, January 2, 2006 at 3:04 PM")
-	
+
 	speakerText := "speaker"
 	if numSpeakers != 1 {
 		speakerText = "speakers"
 	}
 
-	mainText := fmt.Sprintf("🎉 *New Meetup Event: %s*", eventTitle)
-	
+	var mainText, eventDetailsText string
+
+	if eventType == config.EventTypeSocial {
+		mainText = fmt.Sprintf("🍻 *New Social Meetup: %s*", eventTitle)
+		eventDetailsText = fmt.Sprintf("📅 *When:* %s\n📍 *Where:* %s\n🤝 Join us for networking and socializing!",
+			formattedDate, venue)
+	} else {
+		mainText = fmt.Sprintf("🎉 *New Meetup Event: %s*", eventTitle)
+		eventDetailsText = fmt.Sprintf("📅 *When:* %s\n📍 *Where:* %s\n🎤 *Speakers:* %d %s",
+			formattedDate, venue, numSpeakers, speakerText)
+	}
+
 	blocks := []Block{
 		{
 			Type: "section",
@@ -143,13 +155,13 @@ func (c *Client) buildEventMessage(channel, eventTitle, eventURL, venue, eventDa
 			Type: "section",
 			Text: &TextObject{
 				Type: "mrkdwn",
-				Text: fmt.Sprintf("📅 *When:* %s\n📍 *Where:* %s\n🎤 *Speakers:* %d %s", 
-					formattedDate, venue, numSpeakers, speakerText),
+				Text: eventDetailsText,
 			},
 		},
 	}
 
-	if sponsor != "" {
+	// Only show sponsor info for speaker events
+	if eventType == config.EventTypeSpeaker && sponsor != "" {
 		sponsorText := fmt.Sprintf("🏢 *Sponsored by:* %s", sponsor)
 		if sponsorURL != "" {
 			sponsorText = fmt.Sprintf("🏢 *Sponsored by:* <%s|%s>", sponsorURL, sponsor)

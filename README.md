@@ -12,9 +12,10 @@ MeetOp streamlines the process of creating meetup events by:
 
 ## Features
 
-- **Automated Event Creation**: Create Meetup.com events with venue details, date/time, and speaker information
-- **Multi-platform Sharing**: Share to Slack and LinkedIn simultaneously
-- **Smart Sponsor Attribution**: LinkedIn gets full sponsor URLs, Slack gets hyperlinked sponsor names
+- **Two Event Types**: Support for both speaker-focused and social networking events
+- **Automated Event Creation**: Create Meetup.com events with venue details, date/time, and customized messaging
+- **Multi-platform Sharing**: Share to Slack and LinkedIn simultaneously with event-type-specific content
+- **Smart Content Customization**: Different messaging, hashtags, and sponsor handling based on event type
 - **Flexible Slack Integration**: Support for both webhooks and bot tokens
 - **GitHub Actions Integration**: Run via workflow_dispatch with custom inputs
 - **Secure Credential Management**: All API tokens stored as GitHub Secrets
@@ -24,17 +25,33 @@ MeetOp streamlines the process of creating meetup events by:
 
 The project uses GitHub Actions with `workflow_dispatch` to allow manual triggering with the following inputs:
 
+- **Event Type**: Choose between "speaker" (traditional meetup with presentations) or "social" (networking-focused)
 - **Event Title**: The name of your meetup event
 - **Event Description**: Detailed description of the event
 - **Event Date**: Date in YYYY-MM-DD format
 - **Event Time**: Time in HH:MM (24-hour) format
 - **Venue**: Name of the venue
 - **Venue Address**: Full address of the venue
-- **Number of Speakers**: How many speakers will present
-- **Sponsor**: Optional sponsor name
-- **Sponsor URL**: Optional sponsor website URL for proper attribution
+- **Number of Speakers**: How many speakers will present (ignored for social events)
+- **Sponsor**: Optional sponsor name (speaker events only)
+- **Sponsor URL**: Optional sponsor website URL (speaker events only)
 - **Share to Slack**: Toggle Slack sharing on/off
 - **Share to LinkedIn**: Toggle LinkedIn sharing on/off
+
+### Event Type Differences
+
+**Speaker Events**:
+- Focus on technical presentations and speakers
+- Display speaker count and sponsor information
+- Use professional messaging and tech-focused hashtags
+- Include sponsor attribution in all platforms
+
+**Social Events**:
+- Focus on networking and community building
+- No speaker information displayed
+- Use casual, welcoming messaging
+- No sponsor information (community-focused)
+- Different hashtags emphasizing networking and socializing
 
 ## Required GitHub Secrets
 

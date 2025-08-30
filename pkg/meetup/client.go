@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 )
 
 type Client struct {
-	apiKey      string
+	apiKey       string
 	groupURLName string
-	httpClient  *http.Client
+	httpClient   *http.Client
 }
 
 type Event struct {
@@ -26,25 +25,25 @@ type Event struct {
 }
 
 type Venue struct {
-	Name         string  `json:"name"`
-	Address1     string  `json:"address_1"`
-	City         string  `json:"city"`
-	State        string  `json:"state"`
-	Zip          string  `json:"zip"`
-	Country      string  `json:"country"`
-	Latitude     float64 `json:"lat,omitempty"`
-	Longitude    float64 `json:"lon,omitempty"`
+	Name      string  `json:"name"`
+	Address1  string  `json:"address_1"`
+	City      string  `json:"city"`
+	State     string  `json:"state"`
+	Zip       string  `json:"zip"`
+	Country   string  `json:"country"`
+	Latitude  float64 `json:"lat,omitempty"`
+	Longitude float64 `json:"lon,omitempty"`
 }
 
 type CreateEventRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Time        int64  `json:"time"`
-	Duration    int    `json:"duration"` // in milliseconds
-	VenueName   string `json:"venue_name,omitempty"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Time         int64  `json:"time"`
+	Duration     int    `json:"duration"` // in milliseconds
+	VenueName    string `json:"venue_name,omitempty"`
 	VenueAddress string `json:"venue_address,omitempty"`
-	HowToFindUs string `json:"how_to_find_us,omitempty"`
-	GuestLimit  int    `json:"guest_limit,omitempty"`
+	HowToFindUs  string `json:"how_to_find_us,omitempty"`
+	GuestLimit   int    `json:"guest_limit,omitempty"`
 }
 
 type EventResponse struct {
@@ -58,9 +57,9 @@ type EventResponse struct {
 
 func NewClient(apiKey, groupURLName string) *Client {
 	return &Client{
-		apiKey:      apiKey,
+		apiKey:       apiKey,
 		groupURLName: groupURLName,
-		httpClient:  &http.Client{Timeout: 30 * time.Second},
+		httpClient:   &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
@@ -129,7 +128,7 @@ func (c *Client) CreateEvent(title, description, eventDate, eventTime, venue, ve
 
 func (c *Client) GetEvent(eventID string) (*Event, error) {
 	url := fmt.Sprintf("https://api.meetup.com/%s/events/%s", c.groupURLName, eventID)
-	
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
