@@ -50,6 +50,10 @@ on:
         required: true
         type: boolean
         default: true
+      event_url:
+        description: 'Meetup event URL (enter after creating event manually)'
+        required: false
+        type: string
 
 jobs:
   create-and-share-event:
@@ -67,20 +71,10 @@ jobs:
     - name: Build application
       run: go build -o meetop ./cmd/meetop
 
-    - name: Create event and share
+    - name: Generate templates and share to social media
       env:
-        # Meetup API credentials
-        MEETUP_API_KEY: ${{ secrets.MEETUP_API_KEY }}
+        # Meetup Group configuration
         MEETUP_GROUP_URLNAME: ${{ secrets.MEETUP_GROUP_URLNAME }}
-        
-        # Slack API credentials
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        
-        # LinkedIn API credentials
-        LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
-        LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
         
         # Event inputs
         EVENT_TYPE: ${{ github.event.inputs.event_type }}
@@ -93,6 +87,7 @@ jobs:
         SPONSOR_URL: ${{ github.event.inputs.sponsor_url }}
         SHARE_SLACK: ${{ github.event.inputs.share_slack }}
         SHARE_LINKEDIN: ${{ github.event.inputs.share_linkedin }}
+        EVENT_URL: ${{ github.event.inputs.event_url }}
       run: ./meetop
 
     - name: Upload logs

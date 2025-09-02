@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MeetOp is a Go-based automation tool for creating meetup events and sharing them across multiple platforms (Meetup.com, Slack, LinkedIn). The project runs primarily through GitHub Actions with manual triggers.
+MeetOp is a Go-based template generator for managing meetup events. It generates formatted templates for manual Meetup.com event creation and produces ready-to-use copy-paste content for social platforms (Slack, LinkedIn) with platform-specific messaging. The project runs through GitHub Actions or locally.
 
 ## Commands
 
@@ -54,10 +54,10 @@ go run -race ./cmd/meetop
 - **Error Handling**: Comprehensive logging to `meetop.log` file
 - **GitHub Actions**: Uses `workflow_dispatch` for manual triggering with custom inputs
 
-### API Integration Details
-- **Meetup.com**: Uses OAuth2 Bearer token authentication, creates events with venue details
-- **Slack**: Supports both webhooks (preferred) and bot tokens, sends structured block messages with customized content based on event type
-- **LinkedIn**: Uses personal access token, posts to user's feed with UGC API, includes customized messaging and hashtags based on event type
+### Template Generation
+- **Meetup.com**: Generates formatted templates for manual event creation (no API integration due to Pro plan requirements)
+- **Slack**: Produces formatted messages with Slack markup, optimized for team communication
+- **LinkedIn**: Creates professional posts with appropriate hashtags and LinkedIn-style messaging
 
 ### Event Types
 The application supports two types of meetup events:
@@ -78,12 +78,10 @@ The application supports two types of meetup events:
 
 All configuration is handled through environment variables. See `.env.example` for the complete list. Critical variables include:
 - `EVENT_TYPE` for event type (`speaker` or `social`, defaults to `speaker`)
-- `MEETUP_API_KEY` and `MEETUP_GROUP_URLNAME` for event creation
-- Slack integration (choose one):
-  - `SLACK_WEBHOOK_URL` for webhook posting (preferred)
-  - `SLACK_BOT_TOKEN` and `SLACK_CHANNEL` for bot token posting
-- `LINKEDIN_ACCESS_TOKEN` and `LINKEDIN_PERSON_URN` for LinkedIn sharing
+- `MEETUP_GROUP_URLNAME` for template generation (used to create expected event URLs)
+- `EVENT_URL` for social media template generation (optional, can be provided interactively)
 - `SPONSOR` and `SPONSOR_URL` for sponsor attribution (speaker events only)
+- `SHARE_SLACK` and `SHARE_LINKEDIN` to control which platform templates to generate
 
 ## GitHub Actions Workflow
 
@@ -93,12 +91,15 @@ The main workflow (`.github/workflows/create-event.yml`) accepts these inputs:
 - Speaker count (ignored for social events) and sponsor information (speaker events only)
 - Boolean toggles for Slack and LinkedIn sharing
 
-## Error Handling
+Note: The workflow now generates templates for manual Meetup event creation rather than creating events automatically.
 
-- Each API integration has independent error handling
-- Failures in one platform don't prevent others from running
-- All operations are logged with timestamps
-- GitHub Actions uploads logs as artifacts for debugging
+## Workflow Process
+
+1. **Meetup Template**: Generates formatted event details for manual Meetup.com creation
+2. **Manual Event Creation**: User creates the event on Meetup.com using the generated template
+3. **Social Template Generation**: Creates platform-specific copy-paste content for Slack and LinkedIn
+4. **Manual Sharing**: User copies and pastes the generated content to their social platforms
+5. **Platform Optimization**: Each platform gets tailored messaging and formatting for maximum engagement
 
 ## Development Notes
 

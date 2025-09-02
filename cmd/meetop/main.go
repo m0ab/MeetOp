@@ -6,9 +6,7 @@ import (
 	"os"
 
 	"github.com/m0ab/meetop/pkg/config"
-	"github.com/m0ab/meetop/pkg/linkedin"
-	"github.com/m0ab/meetop/pkg/meetup"
-	"github.com/m0ab/meetop/pkg/slack"
+	"github.com/m0ab/meetop/pkg/template"
 )
 
 func main() {
@@ -40,110 +38,43 @@ func main() {
 
 	logger.Printf("Configuration loaded successfully for event: %s", cfg.EventTitle)
 
-	// Create Meetup event
-	logger.Println("Creating Meetup event...")
-	meetupClient := meetup.NewClient(cfg.MeetupAPIKey, cfg.MeetupGroupURLName)
+	// Generate templates
+	logger.Println("Generating event templates...")
+	templateGenerator := template.NewGenerator(cfg.MeetupGroupURLName)
 
-	event, err := meetupClient.CreateEvent(
-		cfg.EventTitle,
-		cfg.EventDescription,
-		cfg.EventDate,
-		cfg.EventTime,
-		cfg.Venue,
-		cfg.VenueAddress,
-	)
-	if err != nil {
-		logger.Printf("Failed to create Meetup event: %v", err)
-		fmt.Printf("Failed to create Meetup event: %v\n", err)
-		os.Exit(1)
+	// Always show Meetup template first
+	meetupTemplate := templateGenerator.GenerateMeetupTemplate(cfg)
+	templateGenerator.PrintMeetupTemplate(meetupTemplate)
+
+	// Get event URL from environment or prompt for input
+	eventURL := os.Getenv("EVENT_URL")
+	if eventURL == "" {
+		fmt.Print("\nAfter creating the event on Meetup.com, enter the event URL (or press Enter to skip social templates): ")
+		fmt.Scanln(&eventURL)
 	}
 
-	logger.Printf("Successfully created Meetup event with ID: %s, URL: %s", event.ID, event.EventURL)
-	fmt.Printf("✅ Meetup event created successfully!\n")
-	fmt.Printf("Event ID: %s\n", event.ID)
-	fmt.Printf("Event URL: %s\n", event.EventURL)
+	if eventURL == "" {
+		logger.Println("No event URL provided, social media templates skipped")
+		fmt.Println("⏭️  Meetup template generated. Social media templates skipped.")
+		fmt.Println("\nTo generate social templates later, run with EVENT_URL environment variable set.")
+		return
+	}
 
-	// Share to Slack if enabled
+	logger.Printf("Generating social media templates with URL: %s", eventURL)
+	
+	// Generate platform-specific templates
 	if cfg.ShareSlack {
-		logger.Println("Sharing event to Slack...")
-		slackClient := slack.NewClient(cfg.SlackBotToken)
-
-		var err error
-
-		// Use webhook if configured, otherwise use bot token
-		if cfg.SlackWebhookURL != "" {
-			logger.Println("Using Slack webhook for message posting")
-			err = slackClient.PostWebhookMessage(
-				cfg.SlackWebhookURL,
-				cfg.EventType,
-				cfg.EventTitle,
-				event.EventURL,
-				cfg.Venue,
-				cfg.EventDate,
-				cfg.EventTime,
-				cfg.NumSpeakers,
-				cfg.Sponsor,
-				cfg.SponsorURL,
-			)
-		} else if cfg.SlackBotToken != "" && cfg.SlackChannel != "" {
-			logger.Println("Using Slack bot token for message posting")
-			err = slackClient.PostMessage(
-				cfg.SlackChannel,
-				cfg.EventType,
-				cfg.EventTitle,
-				event.EventURL,
-				cfg.Venue,
-				cfg.EventDate,
-				cfg.EventTime,
-				cfg.NumSpeakers,
-				cfg.Sponsor,
-				cfg.SponsorURL,
-			)
-		} else {
-			logger.Println("Skipping Slack sharing (missing webhook URL or bot token/channel)")
-			fmt.Printf("⏭️  Slack sharing skipped (missing configuration)\n")
-		}
-
-		if err != nil {
-			logger.Printf("Failed to share to Slack: %v", err)
-			fmt.Printf("❌ Failed to share to Slack: %v\n", err)
-		} else if cfg.SlackWebhookURL != "" || (cfg.SlackBotToken != "" && cfg.SlackChannel != "") {
-			logger.Println("Successfully shared event to Slack")
-			fmt.Printf("✅ Event shared to Slack successfully!\n")
-		}
-	} else {
-		logger.Println("Skipping Slack sharing (disabled)")
-		fmt.Printf("⏭️  Slack sharing skipped\n")
+		slackTemplate := templateGenerator.GenerateSlackTemplate(cfg, eventURL)
+		templateGenerator.PrintSlackTemplate(slackTemplate)
+	}
+	
+	if cfg.ShareLinkedIn {
+		linkedinTemplate := templateGenerator.GenerateLinkedInTemplate(cfg, eventURL)
+		templateGenerator.PrintLinkedInTemplate(linkedinTemplate)
 	}
 
-	// Share to LinkedIn if enabled
-	if cfg.ShareLinkedIn && cfg.LinkedInAccessToken != "" && cfg.LinkedInPersonURN != "" {
-		logger.Println("Sharing event to LinkedIn...")
-		linkedinClient := linkedin.NewClient(cfg.LinkedInAccessToken, cfg.LinkedInPersonURN)
+	fmt.Printf("\n✅ All templates generated! Copy and paste to your platforms.\n")
 
-		err := linkedinClient.ShareEvent(
-			cfg.EventType,
-			cfg.EventTitle,
-			event.EventURL,
-			cfg.Venue,
-			cfg.EventDate,
-			cfg.EventTime,
-			cfg.NumSpeakers,
-			cfg.Sponsor,
-			cfg.SponsorURL,
-		)
-		if err != nil {
-			logger.Printf("Failed to share to LinkedIn: %v", err)
-			fmt.Printf("❌ Failed to share to LinkedIn: %v\n", err)
-		} else {
-			logger.Println("Successfully shared event to LinkedIn")
-			fmt.Printf("✅ Event shared to LinkedIn successfully!\n")
-		}
-	} else {
-		logger.Println("Skipping LinkedIn sharing (disabled or missing configuration)")
-		fmt.Printf("⏭️  LinkedIn sharing skipped\n")
-	}
-
-	logger.Println("MeetOp automation completed successfully")
-	fmt.Printf("\n🎉 All done! Your meetup event has been created and shared according to your settings.\n")
+	logger.Println("Template generation completed successfully")
+	fmt.Printf("\n🎉 Templates ready! Create your Meetup event manually, then copy/paste the social media content.\n")
 }

@@ -3,7 +3,6 @@ package config
 import "errors"
 
 var (
-	ErrMissingMeetupAPIKey       = errors.New("MEETUP_API_KEY is required")
 	ErrMissingMeetupGroupURLName = errors.New("MEETUP_GROUP_URLNAME is required")
 	ErrMissingEventTitle         = errors.New("EVENT_TITLE is required")
 	ErrMissingEventDescription   = errors.New("EVENT_DESCRIPTION is required")

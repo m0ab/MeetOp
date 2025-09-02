@@ -17,18 +17,8 @@ const (
 )
 
 type Config struct {
-	// Meetup API
-	MeetupAPIKey       string
+	// Meetup Group (for template generation)
 	MeetupGroupURLName string
-
-	// Slack API
-	SlackBotToken   string
-	SlackChannel    string
-	SlackWebhookURL string
-
-	// LinkedIn API
-	LinkedInAccessToken string
-	LinkedInPersonURN   string
 
 	// Event details
 	EventType        EventType
@@ -84,13 +74,7 @@ func Load() (*Config, error) {
 	venue, venueAddress := parseVenueInfo()
 
 	return &Config{
-		MeetupAPIKey:        os.Getenv("MEETUP_API_KEY"),
-		MeetupGroupURLName:  os.Getenv("MEETUP_GROUP_URLNAME"),
-		SlackBotToken:       os.Getenv("SLACK_BOT_TOKEN"),
-		SlackChannel:        os.Getenv("SLACK_CHANNEL"),
-		SlackWebhookURL:     os.Getenv("SLACK_WEBHOOK_URL"),
-		LinkedInAccessToken: os.Getenv("LINKEDIN_ACCESS_TOKEN"),
-		LinkedInPersonURN:   os.Getenv("LINKEDIN_PERSON_URN"),
+		MeetupGroupURLName: os.Getenv("MEETUP_GROUP_URLNAME"),
 		EventType:           eventType,
 		EventTitle:          os.Getenv("EVENT_TITLE"),
 		EventDescription:    os.Getenv("EVENT_DESCRIPTION"),
@@ -107,9 +91,6 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) Validate() error {
-	if c.MeetupAPIKey == "" {
-		return ErrMissingMeetupAPIKey
-	}
 	if c.MeetupGroupURLName == "" {
 		return ErrMissingMeetupGroupURLName
 	}
