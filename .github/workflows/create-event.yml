@@ -19,12 +19,8 @@ on:
         description: 'Event description'
         required: true
         type: string
-      event_datetime:
-        description: 'Event date and time (YYYY-MM-DD HH:MM format)'
-        required: true
-        type: string
-      venue_info:
-        description: 'Venue name and address (separate with | e.g. "Tech Hub|123 Main St")'
+      event_datetime_venue:
+        description: 'Event date/time and venue (format: YYYY-MM-DD HH:MM|Venue Name|Address)'
         required: true
         type: string
       num_speakers:
@@ -32,24 +28,15 @@ on:
         required: false
         type: string
         default: '1'
-      sponsor:
-        description: 'Sponsor name (optional, speaker events only)'
+      sponsor_info:
+        description: 'Sponsor name and URL (format: Name|URL, speaker events only)'
         required: false
         type: string
-      sponsor_url:
-        description: 'Sponsor URL (optional, speaker events only)'
+      share_platforms:
+        description: 'Platforms to share to (comma-separated: slack,linkedin)'
         required: false
         type: string
-      share_slack:
-        description: 'Share to Slack'
-        required: true
-        type: boolean
-        default: true
-      share_linkedin:
-        description: 'Share to LinkedIn'
-        required: true
-        type: boolean
-        default: true
+        default: 'slack,linkedin'
       event_url:
         description: 'Meetup event URL (enter after creating event manually)'
         required: false
@@ -80,13 +67,10 @@ jobs:
         EVENT_TYPE: ${{ github.event.inputs.event_type }}
         EVENT_TITLE: ${{ github.event.inputs.event_title }}
         EVENT_DESCRIPTION: ${{ github.event.inputs.event_description }}
-        EVENT_DATETIME: ${{ github.event.inputs.event_datetime }}
-        VENUE_INFO: ${{ github.event.inputs.venue_info }}
+        EVENT_DATETIME_VENUE: ${{ github.event.inputs.event_datetime_venue }}
         NUM_SPEAKERS: ${{ github.event.inputs.num_speakers }}
-        SPONSOR: ${{ github.event.inputs.sponsor }}
-        SPONSOR_URL: ${{ github.event.inputs.sponsor_url }}
-        SHARE_SLACK: ${{ github.event.inputs.share_slack }}
-        SHARE_LINKEDIN: ${{ github.event.inputs.share_linkedin }}
+        SPONSOR_INFO: ${{ github.event.inputs.sponsor_info }}
+        SHARE_PLATFORMS: ${{ github.event.inputs.share_platforms }}
         EVENT_URL: ${{ github.event.inputs.event_url }}
       run: ./meetop
 
